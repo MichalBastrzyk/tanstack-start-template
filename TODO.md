@@ -2,7 +2,8 @@ What else do I need?
 
 - [x] Database/Drizzle
 - [x] Better-Auth
-- [ ] Protected Routes setted up
+- [x] Protected Routes setted up
+- [ ] Protected Procedures setted up
 - [ ] Generic Dashboard setup
 - [ ] Data Table Imlpementation found
 
