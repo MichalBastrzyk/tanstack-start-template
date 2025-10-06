@@ -23,8 +23,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 
+const searchParams = z.object({
+	redirect: z.string().optional(),
+});
+
 export const Route = createFileRoute("/(auth)/auth/sign-in")({
 	component: SignIn,
+	validateSearch: searchParams,
 	beforeLoad: async ({ context }) => {
 		console.log(context.auth);
 	},
@@ -38,6 +43,7 @@ const signInSchema = z.object({
 
 function SignIn() {
 	const navigate = useNavigate();
+	const search = Route.useSearch();
 
 	const form = useForm({
 		defaultValues: {
@@ -57,7 +63,11 @@ function SignIn() {
 				{
 					onSuccess: () => {
 						toast.success("Signed in successfully");
-						navigate({ to: "/", replace: true });
+						if (search.redirect) {
+							navigate({ to: search.redirect, replace: true });
+						} else {
+							navigate({ to: "/", replace: true });
+						}
 					},
 					onError: (ctx) => {
 						toast.error(ctx.error.message);
