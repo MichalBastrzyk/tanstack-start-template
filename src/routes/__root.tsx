@@ -5,21 +5,45 @@ import {
 } from "@tanstack/react-router";
 
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import { FormDevtoolsPlugin } from "@tanstack/react-form-devtools";
 import type { QueryClient } from "@tanstack/react-query";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
+import { NotFoundComponent } from "@/components/not-found";
+import { Toaster } from "@/components/ui/sonner";
 import TanStackQueryDevtools from "@/integrations/tanstack-query/devtools";
 import type { TRPCRouter } from "@/integrations/trpc/router";
+import { auth } from "@/server/auth";
 import appCss from "@/styles.css?url";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
-
 	trpc: TRPCOptionsProxy<TRPCRouter>;
+	auth: Awaited<ReturnType<typeof fetchAuth>>;
 }
 
+const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
+	const req = getRequest();
+
+	const authResponse = await auth.api.getSession({
+		headers: req.headers,
+	});
+
+	return authResponse;
+});
+
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+	beforeLoad: async () => {
+		const auth = await fetchAuth();
+
+		return {
+			auth,
+		};
+	},
+
 	head: () => ({
 		meta: [
 			{
@@ -42,6 +66,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	}),
 
 	shellComponent: RootDocument,
+	notFoundComponent: NotFoundComponent,
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -52,6 +77,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			</head>
 			<body>
 				{children}
+				<Toaster />
 				<TanStackDevtools
 					config={{
 						position: "bottom-right",
@@ -62,6 +88,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 							render: <TanStackRouterDevtoolsPanel />,
 						},
 						TanStackQueryDevtools,
+						FormDevtoolsPlugin(),
 					]}
 				/>
 				<Scripts />
